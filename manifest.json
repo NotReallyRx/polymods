@@ -1,0 +1,9 @@
+{
+  "name": "Spotify RPC",
+  "author": "notrx",
+  "id": "spotifyrpc",
+  "latest": {
+    "0.6.2": "1.0.0",
+    "0.6.3": "1.0.0"
+  }
+}
