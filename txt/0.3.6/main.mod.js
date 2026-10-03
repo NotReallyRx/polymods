@@ -499,7 +499,7 @@ class TextNotesEditorMod extends PolyMod {
 
     title.textContent = "Game Notes";
 
-    const closeBtn = this.button("×");
+    const closeBtn = document.createElement("button"); closeBtn.className = "poly-text-editor-button"; closeBtn.textContent = "×";
 
     closeBtn.className += " poly-text-editor-close";
 
