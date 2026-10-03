@@ -249,7 +249,8 @@ const TEXT_EDITOR_STYLE = `
   height: 25px;
   border: 0;
   outline: 0;
-  background: transparent;
+  background: transparent !important;
+  background-color: #202020 !important;
   color: #eee;
   font-size: 13px;
   font-weight: 600;
