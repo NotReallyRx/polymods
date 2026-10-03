@@ -34,7 +34,7 @@ const STYLE = `
     "Segoe UI",
     sans-serif;
 
-  resize: both;
+  resize: none;
 }
 
 .mod-editor-window[hidden] {
@@ -214,6 +214,149 @@ const STYLE = `
     system-ui,
     sans-serif;
 }
+
+
+/* Resize handles */
+
+.mod-editor-resize {
+  position: absolute;
+  z-index: 20;
+}
+
+.mod-editor-resize-top,
+.mod-editor-resize-bottom {
+  left: 8px;
+  right: 8px;
+  height: 6px;
+  cursor: ns-resize;
+}
+
+.mod-editor-resize-top {
+  top: -3px;
+}
+
+.mod-editor-resize-bottom {
+  bottom: -3px;
+}
+
+.mod-editor-resize-left,
+.mod-editor-resize-right {
+  top: 8px;
+  bottom: 8px;
+  width: 6px;
+  cursor: ew-resize;
+}
+
+.mod-editor-resize-left {
+  left: -3px;
+}
+
+.mod-editor-resize-right {
+  right: -3px;
+}
+
+.mod-editor-resize-top-left,
+.mod-editor-resize-top-right,
+.mod-editor-resize-bottom-left,
+.mod-editor-resize-bottom-right {
+  width: 12px;
+  height: 12px;
+  z-index: 21;
+}
+
+.mod-editor-resize-top-left {
+  top: -3px;
+  left: -3px;
+  cursor: nwse-resize;
+}
+
+.mod-editor-resize-top-right {
+  top: -3px;
+  right: -3px;
+  cursor: nesw-resize;
+}
+
+.mod-editor-resize-bottom-left {
+  bottom: -3px;
+  left: -3px;
+  cursor: nesw-resize;
+}
+
+.mod-editor-resize-bottom-right {
+  right: -3px;
+  bottom: -3px;
+  cursor: nwse-resize;
+}
+
+
+/* New-theme confirmation */
+
+.mod-editor-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, .65);
+}
+
+.mod-editor-modal[hidden] {
+  display: none;
+}
+
+.mod-editor-modal-box {
+  width: 420px;
+  max-width: calc(100vw - 30px);
+  padding: 20px;
+  border: 1px solid #444;
+  border-radius: 8px;
+  background: #202020;
+  color: #ddd;
+  box-shadow: 0 15px 50px rgba(0, 0, 0, .65);
+}
+
+.mod-editor-modal-title {
+  margin-bottom: 10px;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.mod-editor-modal-text {
+  margin-bottom: 18px;
+  color: #aaa;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.mod-editor-modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.mod-editor-modal-button {
+  border: 0;
+  border-radius: 4px;
+  padding: 8px 12px;
+  background: #303030;
+  color: #ddd;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.mod-editor-modal-button:hover {
+  background: #3d3d3d;
+}
+
+.mod-editor-modal-delete {
+  background: #7d3030;
+}
+
+.mod-editor-modal-delete:hover {
+  background: #963838;
+}
 `;
 
 class TextEditorMod extends PolyMod {
@@ -228,6 +371,7 @@ class TextEditorMod extends PolyMod {
     this.importStyle = null;
 
     this.drag = null;
+    this.modal = null;
 
     this.init = (pml) => {
       pml.registerBindCategory("Text Editor");
@@ -739,6 +883,8 @@ class TextEditorMod extends PolyMod {
 
     win.hidden = true;
 
+    this.addResizeHandles(win);
+
     const titlebar =
       document.createElement("div");
 
@@ -760,6 +906,9 @@ class TextEditorMod extends PolyMod {
     const saveBtn =
       this.button("Save");
 
+    const downloadBtn =
+      this.button("Download");
+
     const closeBtn =
       this.button("×");
 
@@ -770,6 +919,7 @@ class TextEditorMod extends PolyMod {
       title,
       newBtn,
       saveBtn,
+      downloadBtn,
       closeBtn
     );
 
@@ -865,6 +1015,8 @@ class TextEditorMod extends PolyMod {
     this.chars = chars;
     this.state = state;
 
+    this.createConfirmModal();
+
     const update = () => {
       this.updateGutter();
       this.updateStatus();
@@ -928,30 +1080,21 @@ class TextEditorMod extends PolyMod {
       }
     );
 
-    newBtn.onclick = () => {
-      textarea.readOnly = false;
-      textarea.disabled = false;
+    newBtn.onclick = (e) => {
+      if (e.shiftKey) {
+        this.newTheme();
+        return;
+      }
 
-      textarea.value = "";
-
-      localStorage.setItem(
-        "cssTheme",
-        ""
-      );
-
-      this.applyTheme();
-
-      this.state.textContent =
-        "New theme";
-
-      this.updateGutter();
-      this.updateStatus();
-
-      textarea.focus();
+      this.confirmNewTheme();
     };
 
     saveBtn.onclick = () => {
       this.save();
+    };
+
+    downloadBtn.onclick = () => {
+      this.downloadTheme();
     };
 
     closeBtn.onclick = () => {
@@ -980,6 +1123,396 @@ class TextEditorMod extends PolyMod {
     return button;
   }
 
+  createConfirmModal() {
+    const modal =
+      document.createElement("div");
+
+    modal.className =
+      "mod-editor-modal";
+
+    modal.hidden = true;
+
+    const box =
+      document.createElement("div");
+
+    box.className =
+      "mod-editor-modal-box";
+
+    const title =
+      document.createElement("div");
+
+    title.className =
+      "mod-editor-modal-title";
+
+    title.textContent =
+      "Create a new theme?";
+
+    const text =
+      document.createElement("div");
+
+    text.className =
+      "mod-editor-modal-text";
+
+    text.textContent =
+      "This will permanently replace the current theme. Would you like to download it first?";
+
+    const buttons =
+      document.createElement("div");
+
+    buttons.className =
+      "mod-editor-modal-buttons";
+
+    const download =
+      document.createElement("button");
+
+    download.className =
+      "mod-editor-modal-button";
+
+    download.textContent =
+      "Download & New";
+
+    const continueBtn =
+      document.createElement("button");
+
+    continueBtn.className =
+      "mod-editor-modal-button mod-editor-modal-delete";
+
+    continueBtn.textContent =
+      "New Without Downloading";
+
+    const cancel =
+      document.createElement("button");
+
+    cancel.className =
+      "mod-editor-modal-button";
+
+    cancel.textContent =
+      "Cancel";
+
+    buttons.append(
+      download,
+      continueBtn,
+      cancel
+    );
+
+    box.append(
+      title,
+      text,
+      buttons
+    );
+
+    modal.appendChild(box);
+    document.body.appendChild(modal);
+
+    this.modal = modal;
+
+    download.onclick = () => {
+      this.downloadTheme();
+      this.newTheme();
+      modal.hidden = true;
+    };
+
+    continueBtn.onclick = () => {
+      this.newTheme();
+      modal.hidden = true;
+    };
+
+    cancel.onclick = () => {
+      modal.hidden = true;
+    };
+  }
+
+  confirmNewTheme() {
+    if (!this.modal) {
+      this.createConfirmModal();
+    }
+
+    this.modal.hidden = false;
+  }
+
+  newTheme() {
+    this.textarea.readOnly = false;
+    this.textarea.disabled = false;
+
+    this.textarea.value = "";
+
+    localStorage.setItem(
+      "cssTheme",
+      ""
+    );
+
+    this.applyTheme();
+
+    this.state.textContent =
+      "New theme";
+
+    this.updateGutter();
+    this.updateStatus();
+
+    this.textarea.focus();
+  }
+
+  downloadTheme() {
+    if (!this.textarea) {
+      return;
+    }
+
+    const blob =
+      new Blob(
+        [this.textarea.value],
+        {
+          type:
+            "text/css;charset=utf-8"
+        }
+      );
+
+    const url =
+      URL.createObjectURL(blob);
+
+    const link =
+      document.createElement("a");
+
+    link.href = url;
+    link.download = "cssTheme.css";
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    link.remove();
+
+    URL.revokeObjectURL(url);
+
+    this.state.textContent =
+      "Downloaded";
+
+    this.textarea.focus();
+  }
+
+  addResizeHandles(element) {
+    const directions = [
+      "top",
+      "bottom",
+      "left",
+      "right",
+      "top-left",
+      "top-right",
+      "bottom-left",
+      "bottom-right"
+    ];
+
+    directions.forEach(
+      (direction) => {
+        const handle =
+          document.createElement("div");
+
+        handle.className =
+          `mod-editor-resize mod-editor-resize-${direction}`;
+
+        element.appendChild(handle);
+
+        handle.addEventListener(
+          "mousedown",
+          (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const rect =
+              element.getBoundingClientRect();
+
+            const startX =
+              e.clientX;
+
+            const startY =
+              e.clientY;
+
+            const startLeft =
+              rect.left;
+
+            const startTop =
+              rect.top;
+
+            const startWidth =
+              rect.width;
+
+            const startHeight =
+              rect.height;
+
+            const minWidth =
+              520;
+
+            const minHeight =
+              320;
+
+            const move =
+              (ev) => {
+                const dx =
+                  ev.clientX -
+                  startX;
+
+                const dy =
+                  ev.clientY -
+                  startY;
+
+                let left =
+                  startLeft;
+
+                let top =
+                  startTop;
+
+                let width =
+                  startWidth;
+
+                let height =
+                  startHeight;
+
+                if (
+                  direction.includes(
+                    "right"
+                  )
+                ) {
+                  width =
+                    Math.max(
+                      minWidth,
+                      startWidth + dx
+                    );
+                }
+
+                if (
+                  direction.includes(
+                    "left"
+                  )
+                ) {
+                  width =
+                    Math.max(
+                      minWidth,
+                      startWidth - dx
+                    );
+
+                  if (
+                    width === minWidth
+                  ) {
+                    left =
+                      startLeft +
+                      startWidth -
+                      minWidth;
+                  } else {
+                    left =
+                      startLeft + dx;
+                  }
+                }
+
+                if (
+                  direction.includes(
+                    "bottom"
+                  )
+                ) {
+                  height =
+                    Math.max(
+                      minHeight,
+                      startHeight + dy
+                    );
+                }
+
+                if (
+                  direction.includes(
+                    "top"
+                  )
+                ) {
+                  height =
+                    Math.max(
+                      minHeight,
+                      startHeight - dy
+                    );
+
+                  if (
+                    height === minHeight
+                  ) {
+                    top =
+                      startTop +
+                      startHeight -
+                      minHeight;
+                  } else {
+                    top =
+                      startTop + dy;
+                  }
+                }
+
+                if (left < 0) {
+                  width += left;
+                  left = 0;
+                }
+
+                if (top < 0) {
+                  height += top;
+                  top = 0;
+                }
+
+                width =
+                  Math.min(
+                    width,
+                    window.innerWidth - left
+                  );
+
+                height =
+                  Math.min(
+                    height,
+                    window.innerHeight - top
+                  );
+
+                width =
+                  Math.max(
+                    minWidth,
+                    width
+                  );
+
+                height =
+                  Math.max(
+                    minHeight,
+                    height
+                  );
+
+                element.style.left =
+                  `${left}px`;
+
+                element.style.top =
+                  `${top}px`;
+
+                element.style.width =
+                  `${width}px`;
+
+                element.style.height =
+                  `${height}px`;
+              };
+
+            const up =
+              () => {
+                document.removeEventListener(
+                  "mousemove",
+                  move
+                );
+
+                document.removeEventListener(
+                  "mouseup",
+                  up
+                );
+              };
+
+            document.addEventListener(
+              "mousemove",
+              move
+            );
+
+            document.addEventListener(
+              "mouseup",
+              up
+            );
+          }
+        );
+      }
+    );
+  }
+
   makeDraggable(
     handle,
     element
@@ -989,6 +1522,14 @@ class TextEditorMod extends PolyMod {
       (e) => {
         if (
           e.target.closest("button")
+        ) {
+          return;
+        }
+
+        if (
+          e.target.closest(
+            ".mod-editor-resize"
+          )
         ) {
           return;
         }
@@ -1008,21 +1549,35 @@ class TextEditorMod extends PolyMod {
             return;
           }
 
-          element.style.left =
-            `${Math.max(
+          const left =
+            Math.max(
               0,
-              this.drag.left +
-              ev.clientX -
-              this.drag.x
-            )}px`;
+              Math.min(
+                this.drag.left +
+                ev.clientX -
+                this.drag.x,
+                window.innerWidth -
+                element.offsetWidth
+              )
+            );
+
+          const top =
+            Math.max(
+              0,
+              Math.min(
+                this.drag.top +
+                ev.clientY -
+                this.drag.y,
+                window.innerHeight -
+                element.offsetHeight
+              )
+            );
+
+          element.style.left =
+            `${left}px`;
 
           element.style.top =
-            `${Math.max(
-              0,
-              this.drag.top +
-              ev.clientY -
-              this.drag.y
-            )}px`;
+            `${top}px`;
         };
 
         const up = () => {
@@ -1164,3 +1719,4 @@ const polyMod =
 export {
   polyMod
 };
+
