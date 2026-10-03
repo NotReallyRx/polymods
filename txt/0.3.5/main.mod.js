@@ -22,7 +22,7 @@ const TEXT_EDITOR_STYLE = `
   border-radius: 8px;
   box-shadow: 0 14px 45px rgba(0, 0, 0, .55);
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  resize: both;
+  resize: none;
 }
 
 .poly-text-editor-window[hidden] {
@@ -200,6 +200,31 @@ const TEXT_EDITOR_STYLE = `
 }
 
 
+/* Note name */
+
+.poly-text-editor-namebar {
+  height: 34px;
+  flex: 0 0 34px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  background: #202020;
+  border-bottom: 1px solid #303030;
+}
+
+.poly-text-editor-name {
+  width: 100%;
+  height: 25px;
+  border: 0;
+  outline: 0;
+  background: transparent !important;
+  background-color: #202020 !important;
+  color: #eee;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+
 /* Editor */
 
 .poly-text-editor-main {
@@ -232,31 +257,6 @@ const TEXT_EDITOR_STYLE = `
 }
 
 
-/* Note name */
-
-.poly-text-editor-namebar {
-  height: 34px;
-  flex: 0 0 34px;
-  display: flex;
-  align-items: center;
-  padding: 0 10px;
-  background: #202020;
-  border-bottom: 1px solid #303030;
-}
-
-.poly-text-editor-name {
-  width: 100%;
-  height: 25px;
-  border: 0;
-  outline: 0;
-  background: transparent !important;
-  background-color: #202020 !important;
-  color: #eee;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-
 /* Status */
 
 .poly-text-editor-status {
@@ -273,7 +273,83 @@ const TEXT_EDITOR_STYLE = `
 }
 
 
-/* Modal */
+/* Resize handles */
+
+.poly-text-editor-resize {
+  position: absolute;
+  z-index: 20;
+}
+
+.poly-text-editor-resize-top,
+.poly-text-editor-resize-bottom {
+  left: 8px;
+  right: 8px;
+  height: 6px;
+  cursor: ns-resize;
+}
+
+.poly-text-editor-resize-top {
+  top: -3px;
+}
+
+.poly-text-editor-resize-bottom {
+  bottom: -3px;
+}
+
+.poly-text-editor-resize-left,
+.poly-text-editor-resize-right {
+  top: 8px;
+  bottom: 8px;
+  width: 6px;
+  cursor: ew-resize;
+}
+
+.poly-text-editor-resize-left {
+  left: -3px;
+}
+
+.poly-text-editor-resize-right {
+  right: -3px;
+}
+
+
+/* Resize corners */
+
+.poly-text-editor-resize-top-left,
+.poly-text-editor-resize-top-right,
+.poly-text-editor-resize-bottom-left,
+.poly-text-editor-resize-bottom-right {
+  width: 12px;
+  height: 12px;
+  z-index: 21;
+}
+
+.poly-text-editor-resize-top-left {
+  top: -3px;
+  left: -3px;
+  cursor: nwse-resize;
+}
+
+.poly-text-editor-resize-top-right {
+  top: -3px;
+  right: -3px;
+  cursor: nesw-resize;
+}
+
+.poly-text-editor-resize-bottom-left {
+  bottom: -3px;
+  left: -3px;
+  cursor: nesw-resize;
+}
+
+.poly-text-editor-resize-bottom-right {
+  right: -3px;
+  bottom: -3px;
+  cursor: nwse-resize;
+}
+
+
+/* Delete modal */
 
 .poly-text-editor-modal {
   position: fixed;
@@ -365,6 +441,7 @@ class TextNotesEditorMod extends PolyMod {
 
     this.notes = [];
     this.currentNote = null;
+    this.deleteIndex = null;
 
     this.drag = null;
 
@@ -392,7 +469,9 @@ class TextNotesEditorMod extends PolyMod {
 
 
   create() {
-    if (this.editor) return;
+    if (this.editor) {
+      return;
+    }
 
 
     const style =
@@ -417,6 +496,14 @@ class TextNotesEditorMod extends PolyMod {
       "poly-text-editor-window";
 
     win.hidden = true;
+
+
+    /*
+     * Resize handles need to exist
+     * inside the window.
+     */
+
+    this.addResizeHandles(win);
 
 
     /*
@@ -516,7 +603,7 @@ class TextNotesEditorMod extends PolyMod {
 
 
     /*
-     * Name
+     * Note name
      */
 
     const namebar =
@@ -680,7 +767,9 @@ class TextNotesEditorMod extends PolyMod {
       const file =
         fileInput.files[0];
 
-      if (!file) return;
+      if (!file) {
+        return;
+      }
 
 
       const reader =
@@ -690,10 +779,12 @@ class TextNotesEditorMod extends PolyMod {
       reader.onload = () => {
 
         try {
+
           const data =
             JSON.parse(
               reader.result
             );
+
 
           if (
             !data ||
@@ -708,6 +799,7 @@ class TextNotesEditorMod extends PolyMod {
           for (
             const imported of data.notes
           ) {
+
             if (
               !imported ||
               typeof imported !== "object"
@@ -742,6 +834,7 @@ class TextNotesEditorMod extends PolyMod {
           if (
             this.notes.length > 0
           ) {
+
             this.selectNote(
               this.notes.length - 1
             );
@@ -751,11 +844,11 @@ class TextNotesEditorMod extends PolyMod {
           this.state.textContent =
             "Imported";
 
-        } catch (error) {
+        } catch {
 
           /*
-           * If it isn't JSON,
-           * import it as a plain text note.
+           * Normal .txt files become
+           * a new note.
            */
 
           const name =
@@ -785,6 +878,7 @@ class TextNotesEditorMod extends PolyMod {
           this.selectNote(
             this.notes.length - 1
           );
+
 
           this.state.textContent =
             "Imported text file";
@@ -850,7 +944,7 @@ class TextNotesEditorMod extends PolyMod {
 
 
     /*
-     * Note name changes
+     * Name changes
      */
 
     nameInput.addEventListener(
@@ -931,6 +1025,7 @@ class TextNotesEditorMod extends PolyMod {
           if (
             this.currentNote !== null
           ) {
+
             this.notes[
               this.currentNote
             ].content =
@@ -981,8 +1076,11 @@ class TextNotesEditorMod extends PolyMod {
     if (
       this.notes.length === 0
     ) {
+
       this.newNote();
+
     } else {
+
       this.selectNote(0);
     }
   }
@@ -1011,7 +1109,24 @@ class TextNotesEditorMod extends PolyMod {
       if (
         !Array.isArray(data)
       ) {
-        this.notes = [];
+
+        /*
+         * Also support the old
+         * single-note format if the
+         * stored value is plain text.
+         */
+
+        this.notes = [{
+          id:
+            this.newId(),
+
+          name:
+            "Untitled",
+
+          content:
+            String(saved)
+        }];
+
         return;
       }
 
@@ -1036,6 +1151,7 @@ class TextNotesEditorMod extends PolyMod {
         }));
 
     } catch {
+
       this.notes = [];
     }
   }
@@ -1163,6 +1279,7 @@ class TextNotesEditorMod extends PolyMod {
           index ===
           this.currentNote
         ) {
+
           tab.classList.add(
             "active"
           );
@@ -1212,19 +1329,10 @@ class TextNotesEditorMod extends PolyMod {
           "Delete note";
 
 
-        /*
-         * Clicking the tab itself
-         * switches notes.
-         */
-
         tab.onclick = () => {
           this.selectNote(index);
         };
 
-
-        /*
-         * Download this note.
-         */
 
         download.onclick =
           (e) => {
@@ -1236,10 +1344,6 @@ class TextNotesEditorMod extends PolyMod {
             );
           };
 
-
-        /*
-         * Delete this note.
-         */
 
         remove.onclick =
           (e) => {
@@ -1320,64 +1424,13 @@ class TextNotesEditorMod extends PolyMod {
   }
 
 
-  downloadAll() {
-
-    const data =
-      JSON.stringify(
-        {
-          notes:
-            this.notes
-        },
-        null,
-        2
-      );
-
-
-    const blob =
-      new Blob(
-        [data],
-        {
-          type:
-            "application/json"
-        }
-      );
-
-
-    const url =
-      URL.createObjectURL(
-        blob
-      );
-
-
-    const link =
-      document.createElement("a");
-
-    link.href =
-      url;
-
-    link.download =
-      "game-notes.json";
-
-
-    document.body.appendChild(
-      link
-    );
-
-    link.click();
-
-    link.remove();
-
-
-    URL.revokeObjectURL(
-      url
-    );
-  }
-
-
   safeFilename(name) {
 
     return (
-      String(name || "Untitled")
+      String(
+        name ||
+        "Untitled"
+      )
         .replace(
           /[<>:"/\\\\|?*]/g,
           "_"
@@ -1521,9 +1574,7 @@ class TextNotesEditorMod extends PolyMod {
 
   confirmDelete(index) {
 
-    if (
-      !this.modal
-    ) {
+    if (!this.modal) {
       return;
     }
 
@@ -1586,8 +1637,12 @@ class TextNotesEditorMod extends PolyMod {
     );
 
 
+    this.modal.hidden =
+      true;
+
+
     /*
-     * Always keep at least one note.
+     * Always keep one note.
      */
 
     if (
@@ -1598,9 +1653,6 @@ class TextNotesEditorMod extends PolyMod {
         null;
 
       this.saveNotes();
-
-      this.modal.hidden =
-        true;
 
       this.newNote();
 
@@ -1627,9 +1679,6 @@ class TextNotesEditorMod extends PolyMod {
 
 
     this.saveNotes();
-
-    this.modal.hidden =
-      true;
 
     this.renderTabs();
 
@@ -1684,9 +1733,7 @@ class TextNotesEditorMod extends PolyMod {
 
   updateStatus() {
 
-    if (
-      !this.textarea
-    ) {
+    if (!this.textarea) {
       return;
     }
 
@@ -1720,20 +1767,293 @@ class TextNotesEditorMod extends PolyMod {
   }
 
 
-  button(text) {
+  addResizeHandles(element) {
 
-    const button =
-      document.createElement(
-        "button"
-      );
+    const directions = [
+      "top",
+      "bottom",
+      "left",
+      "right",
+      "top-left",
+      "top-right",
+      "bottom-left",
+      "bottom-right"
+    ];
 
-    button.className =
-      "poly-text-editor-button";
 
-    button.textContent =
-      text;
+    directions.forEach(
+      (direction) => {
 
-    return button;
+        const handle =
+          document.createElement(
+            "div"
+          );
+
+
+        handle.className =
+          `poly-text-editor-resize poly-text-editor-resize-${direction}`;
+
+
+        element.appendChild(
+          handle
+        );
+
+
+        handle.addEventListener(
+          "mousedown",
+          (e) => {
+
+            e.preventDefault();
+            e.stopPropagation();
+
+
+            const rect =
+              element.getBoundingClientRect();
+
+
+            const startX =
+              e.clientX;
+
+            const startY =
+              e.clientY;
+
+            const startLeft =
+              rect.left;
+
+            const startTop =
+              rect.top;
+
+            const startWidth =
+              rect.width;
+
+            const startHeight =
+              rect.height;
+
+
+            const minWidth =
+              520;
+
+            const minHeight =
+              320;
+
+
+            const move =
+              (ev) => {
+
+                const dx =
+                  ev.clientX -
+                  startX;
+
+                const dy =
+                  ev.clientY -
+                  startY;
+
+
+                let left =
+                  startLeft;
+
+                let top =
+                  startTop;
+
+                let width =
+                  startWidth;
+
+                let height =
+                  startHeight;
+
+
+                /*
+                 * Right
+                 */
+
+                if (
+                  direction.includes(
+                    "right"
+                  )
+                ) {
+
+                  width =
+                    Math.max(
+                      minWidth,
+                      startWidth + dx
+                    );
+                }
+
+
+                /*
+                 * Left
+                 */
+
+                if (
+                  direction.includes(
+                    "left"
+                  )
+                ) {
+
+                  width =
+                    Math.max(
+                      minWidth,
+                      startWidth - dx
+                    );
+
+
+                  if (
+                    width === minWidth
+                  ) {
+
+                    left =
+                      startLeft +
+                      startWidth -
+                      minWidth;
+
+                  } else {
+
+                    left =
+                      startLeft + dx;
+                  }
+                }
+
+
+                /*
+                 * Bottom
+                 */
+
+                if (
+                  direction.includes(
+                    "bottom"
+                  )
+                ) {
+
+                  height =
+                    Math.max(
+                      minHeight,
+                      startHeight + dy
+                    );
+                }
+
+
+                /*
+                 * Top
+                 */
+
+                if (
+                  direction.includes(
+                    "top"
+                  )
+                ) {
+
+                  height =
+                    Math.max(
+                      minHeight,
+                      startHeight - dy
+                    );
+
+
+                  if (
+                    height === minHeight
+                  ) {
+
+                    top =
+                      startTop +
+                      startHeight -
+                      minHeight;
+
+                  } else {
+
+                    top =
+                      startTop + dy;
+                  }
+                }
+
+
+                /*
+                 * Keep inside viewport.
+                 */
+
+                if (left < 0) {
+                  width += left;
+                  left = 0;
+                }
+
+
+                if (top < 0) {
+                  height += top;
+                  top = 0;
+                }
+
+
+                width =
+                  Math.min(
+                    width,
+                    window.innerWidth - left
+                  );
+
+
+                height =
+                  Math.min(
+                    height,
+                    window.innerHeight - top
+                  );
+
+
+                width =
+                  Math.max(
+                    minWidth,
+                    width
+                  );
+
+
+                height =
+                  Math.max(
+                    minHeight,
+                    height
+                  );
+
+
+                element.style.left =
+                  `${left}px`;
+
+                element.style.top =
+                  `${top}px`;
+
+                element.style.width =
+                  `${width}px`;
+
+                element.style.height =
+                  `${height}px`;
+              };
+
+
+            const up =
+              () => {
+
+                document.removeEventListener(
+                  "mousemove",
+                  move
+                );
+
+
+                document.removeEventListener(
+                  "mouseup",
+                  up
+                );
+              };
+
+
+            document.addEventListener(
+              "mousemove",
+              move
+            );
+
+
+            document.addEventListener(
+              "mouseup",
+              up
+            );
+          }
+        );
+      }
+    );
   }
 
 
@@ -1755,6 +2075,21 @@ class TextNotesEditorMod extends PolyMod {
         }
 
 
+        /*
+         * Do not start dragging if
+         * the mouse is on a resize
+         * handle.
+         */
+
+        if (
+          e.target.closest(
+            ".poly-text-editor-resize"
+          )
+        ) {
+          return;
+        }
+
+
         const rect =
           element.getBoundingClientRect();
 
@@ -1770,29 +2105,50 @@ class TextNotesEditorMod extends PolyMod {
         const move =
           (ev) => {
 
-            if (
-              !this.drag
-            ) {
+            if (!this.drag) {
               return;
             }
 
 
-            element.style.left =
-              `${Math.max(
-                0,
-                this.drag.left +
-                ev.clientX -
-                this.drag.x
-              )}px`;
+            let left =
+              this.drag.left +
+              ev.clientX -
+              this.drag.x;
 
+
+            let top =
+              this.drag.top +
+              ev.clientY -
+              this.drag.y;
+
+
+            left =
+              Math.max(
+                0,
+                Math.min(
+                  left,
+                  window.innerWidth -
+                  element.offsetWidth
+                )
+              );
+
+
+            top =
+              Math.max(
+                0,
+                Math.min(
+                  top,
+                  window.innerHeight -
+                  element.offsetHeight
+                )
+              );
+
+
+            element.style.left =
+              `${left}px`;
 
             element.style.top =
-              `${Math.max(
-                0,
-                this.drag.top +
-                ev.clientY -
-                this.drag.y
-              )}px`;
+              `${top}px`;
           };
 
 
@@ -1874,8 +2230,11 @@ class TextNotesEditorMod extends PolyMod {
     if (
       this.editor.hidden
     ) {
+
       this.show();
+
     } else {
+
       this.hide();
     }
   }
