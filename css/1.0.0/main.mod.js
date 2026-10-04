@@ -382,7 +382,7 @@ class TextEditorMod extends PolyMod {
         "keydown",
         "F8",
         null,
-        () => this.toggle()
+        () => this.toggle(),
       );
     };
 
@@ -413,24 +413,14 @@ class TextEditorMod extends PolyMod {
     let comment = false;
 
     while (i < css.length) {
-      if (
-        !comment &&
-        css[i] === "/" &&
-        css[i + 1] === "*"
-      ) {
+      if (!comment && css[i] === "/" && css[i + 1] === "*") {
         comment = true;
 
         output += "/*";
 
         i += 2;
 
-        while (
-          i < css.length &&
-          !(
-            css[i] === "*" &&
-            css[i + 1] === "/"
-          )
-        ) {
+        while (i < css.length && !(css[i] === "*" && css[i + 1] === "/")) {
           output += css[i++];
         }
 
@@ -450,10 +440,7 @@ class TextEditorMod extends PolyMod {
       if (quote) {
         output += css[i];
 
-        if (
-          css[i] === "\\" &&
-          i + 1 < css.length
-        ) {
+        if (css[i] === "\\" && i + 1 < css.length) {
           output += css[i + 1];
           i += 2;
           continue;
@@ -467,28 +454,16 @@ class TextEditorMod extends PolyMod {
         continue;
       }
 
-      if (
-        css[i] === '"' ||
-        css[i] === "'"
-      ) {
+      if (css[i] === '"' || css[i] === "'") {
         quote = css[i];
         output += css[i++];
         continue;
       }
 
-      if (
-        css.slice(i, i + 7).toLowerCase() ===
-        "@import"
-      ) {
-        const before =
-          i === 0
-            ? ""
-            : css[i - 1];
+      if (css.slice(i, i + 7).toLowerCase() === "@import") {
+        const before = i === 0 ? "" : css[i - 1];
 
-        if (
-          before &&
-          /[a-z0-9_-]/i.test(before)
-        ) {
+        if (before && /[a-z0-9_-]/i.test(before)) {
           output += css[i++];
           continue;
         }
@@ -502,10 +477,7 @@ class TextEditorMod extends PolyMod {
           const ch = css[j];
 
           if (localQuote) {
-            if (
-              ch === "\\" &&
-              j + 1 < css.length
-            ) {
+            if (ch === "\\" && j + 1 < css.length) {
               j += 2;
               continue;
             }
@@ -518,10 +490,7 @@ class TextEditorMod extends PolyMod {
             continue;
           }
 
-          if (
-            ch === '"' ||
-            ch === "'"
-          ) {
+          if (ch === '"' || ch === "'") {
             localQuote = ch;
             j++;
             continue;
@@ -535,15 +504,10 @@ class TextEditorMod extends PolyMod {
             parentheses--;
           }
 
-          if (
-            ch === ";" &&
-            parentheses === 0
-          ) {
+          if (ch === ";" && parentheses === 0) {
             j++;
 
-            imports.push(
-              css.slice(i, j).trim()
-            );
+            imports.push(css.slice(i, j).trim());
 
             i = j;
 
@@ -566,7 +530,7 @@ class TextEditorMod extends PolyMod {
 
     return {
       imports,
-      css: output
+      css: output,
     };
   }
 
@@ -601,16 +565,12 @@ class TextEditorMod extends PolyMod {
         return;
       }
 
-      const trimmed =
-        text.trim();
+      const trimmed = text.trim();
 
       /*
        * Ignore at-rules and selectors.
        */
-      if (
-        trimmed.startsWith("@") ||
-        !trimmed.includes(":")
-      ) {
+      if (trimmed.startsWith("@") || !trimmed.includes(":")) {
         result += text;
         return;
       }
@@ -621,18 +581,11 @@ class TextEditorMod extends PolyMod {
       let colon = -1;
       let localQuote = null;
 
-      for (
-        let i = 0;
-        i < text.length;
-        i++
-      ) {
+      for (let i = 0; i < text.length; i++) {
         const ch = text[i];
 
         if (localQuote) {
-          if (
-            ch === "\\" &&
-            i + 1 < text.length
-          ) {
+          if (ch === "\\" && i + 1 < text.length) {
             i++;
             continue;
           }
@@ -644,10 +597,7 @@ class TextEditorMod extends PolyMod {
           continue;
         }
 
-        if (
-          ch === '"' ||
-          ch === "'"
-        ) {
+        if (ch === '"' || ch === "'") {
           localQuote = ch;
           continue;
         }
@@ -663,11 +613,9 @@ class TextEditorMod extends PolyMod {
         return;
       }
 
-      const property =
-        text.slice(0, colon).trim();
+      const property = text.slice(0, colon).trim();
 
-      const value =
-        text.slice(colon + 1).trim();
+      const value = text.slice(colon + 1).trim();
 
       /*
        * A selector such as:
@@ -676,44 +624,29 @@ class TextEditorMod extends PolyMod {
        *
        * isn't a declaration.
        */
-      if (
-        !property ||
-        property.includes("{") ||
-        property.startsWith("@")
-      ) {
+      if (!property || property.includes("{") || property.startsWith("@")) {
         result += text;
         return;
       }
 
-      if (
-        value.endsWith("!important")
-      ) {
+      if (value.endsWith("!important")) {
         result += text;
         return;
       }
 
-      const leading =
-        text.match(/^\s*/)?.[0] || "";
+      const leading = text.match(/^\s*/)?.[0] || "";
 
-      result +=
-        `${leading}${property}: ${value} !important`;
+      result += `${leading}${property}: ${value} !important`;
     };
 
-    for (
-      let i = 0;
-      i < css.length;
-      i++
-    ) {
+    for (let i = 0; i < css.length; i++) {
       const ch = css[i];
       const next = css[i + 1];
 
       if (comment) {
         buffer += ch;
 
-        if (
-          ch === "*" &&
-          next === "/"
-        ) {
+        if (ch === "*" && next === "/") {
           buffer += "/";
           i++;
           comment = false;
@@ -722,11 +655,7 @@ class TextEditorMod extends PolyMod {
         continue;
       }
 
-      if (
-        !quote &&
-        ch === "/" &&
-        next === "*"
-      ) {
+      if (!quote && ch === "/" && next === "*") {
         buffer += "/*";
         i++;
         comment = true;
@@ -736,10 +665,7 @@ class TextEditorMod extends PolyMod {
       if (quote) {
         buffer += ch;
 
-        if (
-          ch === "\\" &&
-          i + 1 < css.length
-        ) {
+        if (ch === "\\" && i + 1 < css.length) {
           buffer += css[i + 1];
           i++;
           continue;
@@ -752,10 +678,7 @@ class TextEditorMod extends PolyMod {
         continue;
       }
 
-      if (
-        ch === '"' ||
-        ch === "'"
-      ) {
+      if (ch === '"' || ch === "'") {
         quote = ch;
         buffer += ch;
         continue;
@@ -785,21 +708,14 @@ class TextEditorMod extends PolyMod {
       if (ch === "}") {
         flushDeclaration();
 
-        depth = Math.max(
-          0,
-          depth - 1
-        );
+        depth = Math.max(0, depth - 1);
 
         result += "}";
 
         continue;
       }
 
-      if (
-        ch === ";" &&
-        parentheses === 0 &&
-        depth > 0
-      ) {
+      if (ch === ";" && parentheses === 0 && depth > 0) {
         flushDeclaration();
 
         result += ";";
@@ -818,49 +734,35 @@ class TextEditorMod extends PolyMod {
   }
 
   applyTheme() {
-    const css =
-      localStorage.getItem("cssTheme") || "";
+    const css = localStorage.getItem("cssTheme") || "";
 
-    const {
-      imports,
-      css: normalCSS
-    } = this.splitImports(css);
+    const { imports, css: normalCSS } = this.splitImports(css);
 
     /*
      * Keep imports in their own style element.
      */
     if (!this.importStyle) {
-      this.importStyle =
-        document.createElement("style");
+      this.importStyle = document.createElement("style");
 
-      this.importStyle.id =
-        "poly-mod-css-imports";
+      this.importStyle.id = "poly-mod-css-imports";
 
-      document.head.prepend(
-        this.importStyle
-      );
+      document.head.prepend(this.importStyle);
     }
 
-    this.importStyle.textContent =
-      imports.join("\n");
+    this.importStyle.textContent = imports.join("\n");
 
     /*
      * Everything else gets !important.
      */
     if (!this.themeStyle) {
-      this.themeStyle =
-        document.createElement("style");
+      this.themeStyle = document.createElement("style");
 
-      this.themeStyle.id =
-        "poly-mod-css-theme";
+      this.themeStyle.id = "poly-mod-css-theme";
 
-      document.head.appendChild(
-        this.themeStyle
-      );
+      document.head.appendChild(this.themeStyle);
     }
 
-    this.themeStyle.textContent =
-      this.makeImportant(normalCSS);
+    this.themeStyle.textContent = this.makeImportant(normalCSS);
   }
 
   create() {
@@ -868,95 +770,65 @@ class TextEditorMod extends PolyMod {
       return;
     }
 
-    const style =
-      document.createElement("style");
+    const style = document.createElement("style");
 
     style.textContent = STYLE;
 
     document.head.appendChild(style);
 
-    const win =
-      document.createElement("div");
+    const win = document.createElement("div");
 
-    win.className =
-      "mod-editor-window";
+    win.className = "mod-editor-window";
 
     win.hidden = true;
 
     this.addResizeHandles(win);
 
-    const titlebar =
-      document.createElement("div");
+    const titlebar = document.createElement("div");
 
-    titlebar.className =
-      "mod-editor-titlebar";
+    titlebar.className = "mod-editor-titlebar";
 
-    const title =
-      document.createElement("div");
+    const title = document.createElement("div");
 
-    title.className =
-      "mod-editor-title";
+    title.className = "mod-editor-title";
 
-    title.textContent =
-      "CSS Theme Editor";
+    title.textContent = "CSS Theme Editor";
 
-    const newBtn =
-      this.button("New");
+    const newBtn = this.button("New");
 
-    const saveBtn =
-      this.button("Save");
+    const saveBtn = this.button("Save");
 
-    const downloadBtn =
-      this.button("Download");
+    const downloadBtn = this.button("Download");
 
-    const closeBtn =
-      this.button("×");
+    const closeBtn = this.button("×");
 
-    closeBtn.className +=
-      " mod-editor-close";
+    closeBtn.className += " mod-editor-close";
 
-    titlebar.append(
-      title,
-      newBtn,
-      saveBtn,
-      downloadBtn,
-      closeBtn
-    );
+    titlebar.append(title, newBtn, saveBtn, downloadBtn, closeBtn);
 
-    const tabs =
-      document.createElement("div");
+    const tabs = document.createElement("div");
 
-    tabs.className =
-      "mod-editor-tabs";
+    tabs.className = "mod-editor-tabs";
 
-    const tab =
-      document.createElement("button");
+    const tab = document.createElement("button");
 
-    tab.className =
-      "mod-editor-tab active";
+    tab.className = "mod-editor-tab active";
 
-    tab.textContent =
-      "cssTheme";
+    tab.textContent = "cssTheme";
 
     tabs.appendChild(tab);
 
-    const main =
-      document.createElement("div");
+    const main = document.createElement("div");
 
-    main.className =
-      "mod-editor-main";
+    main.className = "mod-editor-main";
 
-    const gutter =
-      document.createElement("div");
+    const gutter = document.createElement("div");
 
-    gutter.className =
-      "mod-editor-gutter";
+    gutter.className = "mod-editor-gutter";
 
-    const textarea =
-      document.createElement("textarea");
+    const textarea = document.createElement("textarea");
 
-    textarea.className =
-      "mod-editor-text";
+    textarea.className = "mod-editor-text";
 
     textarea.spellcheck = false;
     textarea.wrap = "off";
@@ -964,50 +836,28 @@ class TextEditorMod extends PolyMod {
     textarea.readOnly = false;
     textarea.disabled = false;
 
-    textarea.value =
-      localStorage.getItem(
-        "cssTheme"
-      ) || "";
+    textarea.value = localStorage.getItem("cssTheme") || "";
 
-    const status =
-      document.createElement("div");
+    const status = document.createElement("div");
 
-    status.className =
-      "mod-editor-status";
+    status.className = "mod-editor-status";
 
-    const pos =
-      document.createElement("span");
+    const pos = document.createElement("span");
 
-    const chars =
-      document.createElement("span");
+    const chars = document.createElement("span");
 
-    const state =
-      document.createElement("span");
+    const state = document.createElement("span");
 
-    state.textContent =
-      "Ready";
+    state.textContent = "Ready";
 
-    status.append(
-      pos,
-      chars,
-      state
-    );
+    status.append(pos, chars, state);
 
-    main.append(
-      gutter,
-      textarea
-    );
+    main.append(gutter, textarea);
 
-    win.append(
-      titlebar,
-      tabs,
-      main,
-      status
-    );
+    win.append(titlebar, tabs, main, status);
 
     document.body.appendChild(win);
     this.restoreWindowState(win);
-
 
     this.editor = win;
     this.textarea = textarea;
@@ -1023,8 +873,7 @@ class TextEditorMod extends PolyMod {
       this.updateGutter();
       this.updateStatus();
 
-      this.state.textContent =
-        "Modified";
+      this.state.textContent = "Modified";
     };
 
     const blockGameKeys = (e) => {
@@ -1036,60 +885,34 @@ class TextEditorMod extends PolyMod {
     document.addEventListener("keydown", blockGameKeys, true);
     document.addEventListener("keyup", blockGameKeys, true);
 
-    textarea.addEventListener(
-      "input",
-      update
-    );
+    textarea.addEventListener("input", update);
 
-    textarea.addEventListener(
-      "scroll",
-      () => {
-        gutter.scrollTop =
-          textarea.scrollTop;
+    textarea.addEventListener("scroll", () => {
+      gutter.scrollTop = textarea.scrollTop;
+    });
+
+    textarea.addEventListener("click", () => this.updateStatus());
+
+    textarea.addEventListener("keyup", () => this.updateStatus());
+
+    textarea.addEventListener("keydown", (e) => {
+      if (e.key === "Tab") {
+        e.preventDefault();
+
+        const start = textarea.selectionStart;
+
+        const end = textarea.selectionEnd;
+
+        textarea.setRangeText("  ", start, end, "end");
+
+        update();
       }
-    );
 
-    textarea.addEventListener(
-      "click",
-      () => this.updateStatus()
-    );
-
-    textarea.addEventListener(
-      "keyup",
-      () => this.updateStatus()
-    );
-
-    textarea.addEventListener(
-      "keydown",
-      (e) => {
-        if (e.key === "Tab") {
-          e.preventDefault();
-
-          const start =
-            textarea.selectionStart;
-
-          const end =
-            textarea.selectionEnd;
-
-          textarea.setRangeText(
-            "  ",
-            start,
-            end,
-            "end"
-          );
-
-          update();
-        }
-
-        if (
-          (e.ctrlKey || e.metaKey) &&
-          e.key.toLowerCase() === "s"
-        ) {
-          e.preventDefault();
-          this.save();
-        }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        this.save();
       }
-    );
+    });
 
     newBtn.onclick = (e) => {
       if (e.shiftKey) {
@@ -1112,105 +935,71 @@ class TextEditorMod extends PolyMod {
       this.hide();
     };
 
-    this.makeDraggable(
-      titlebar,
-      win
-    );
+    this.makeDraggable(titlebar, win);
 
     this.updateGutter();
     this.updateStatus();
   }
 
   button(text) {
-    const button =
-      document.createElement("button");
+    const button = document.createElement("button");
 
-    button.className =
-      "mod-editor-button";
+    button.className = "mod-editor-button";
 
-    button.textContent =
-      text;
+    button.textContent = text;
 
     return button;
   }
 
   createConfirmModal() {
-    const modal =
-      document.createElement("div");
+    const modal = document.createElement("div");
 
-    modal.className =
-      "mod-editor-modal";
+    modal.className = "mod-editor-modal";
 
     modal.hidden = true;
 
-    const box =
-      document.createElement("div");
+    const box = document.createElement("div");
 
-    box.className =
-      "mod-editor-modal-box";
+    box.className = "mod-editor-modal-box";
 
-    const title =
-      document.createElement("div");
+    const title = document.createElement("div");
 
-    title.className =
-      "mod-editor-modal-title";
+    title.className = "mod-editor-modal-title";
 
-    title.textContent =
-      "Create a new theme?";
+    title.textContent = "Create a new theme?";
 
-    const text =
-      document.createElement("div");
+    const text = document.createElement("div");
 
-    text.className =
-      "mod-editor-modal-text";
+    text.className = "mod-editor-modal-text";
 
     text.textContent =
       "This will permanently replace the current theme. Would you like to download it first?";
 
-    const buttons =
-      document.createElement("div");
+    const buttons = document.createElement("div");
 
-    buttons.className =
-      "mod-editor-modal-buttons";
+    buttons.className = "mod-editor-modal-buttons";
 
-    const download =
-      document.createElement("button");
+    const download = document.createElement("button");
 
-    download.className =
-      "mod-editor-modal-button";
+    download.className = "mod-editor-modal-button";
 
-    download.textContent =
-      "Download & New";
+    download.textContent = "Download & New";
 
-    const continueBtn =
-      document.createElement("button");
+    const continueBtn = document.createElement("button");
 
-    continueBtn.className =
-      "mod-editor-modal-button mod-editor-modal-delete";
+    continueBtn.className = "mod-editor-modal-button mod-editor-modal-delete";
 
-    continueBtn.textContent =
-      "New Without Downloading";
+    continueBtn.textContent = "New Without Downloading";
 
-    const cancel =
-      document.createElement("button");
+    const cancel = document.createElement("button");
 
-    cancel.className =
-      "mod-editor-modal-button";
+    cancel.className = "mod-editor-modal-button";
 
-    cancel.textContent =
-      "Cancel";
+    cancel.textContent = "Cancel";
 
-    buttons.append(
-      download,
-      continueBtn,
-      cancel
-    );
+    buttons.append(download, continueBtn, cancel);
 
-    box.append(
-      title,
-      text,
-      buttons
-    );
+    box.append(title, text, buttons);
 
     modal.appendChild(box);
     document.body.appendChild(modal);
@@ -1247,15 +1036,11 @@ class TextEditorMod extends PolyMod {
 
     this.textarea.value = "";
 
-    localStorage.setItem(
-      "cssTheme",
-      ""
-    );
+    localStorage.setItem("cssTheme", "");
 
     this.applyTheme();
 
-    this.state.textContent =
-      "New theme";
+    this.state.textContent = "New theme";
 
     this.updateGutter();
     this.updateStatus();
@@ -1268,20 +1053,13 @@ class TextEditorMod extends PolyMod {
       return;
     }
 
-    const blob =
-      new Blob(
-        [this.textarea.value],
-        {
-          type:
-            "text/css;charset=utf-8"
-        }
-      );
+    const blob = new Blob([this.textarea.value], {
+      type: "text/css;charset=utf-8",
+    });
 
-    const url =
-      URL.createObjectURL(blob);
+    const url = URL.createObjectURL(blob);
 
-    const link =
-      document.createElement("a");
+    const link = document.createElement("a");
 
     link.href = url;
     link.download = "cssTheme.css";
@@ -1294,8 +1072,7 @@ class TextEditorMod extends PolyMod {
 
     URL.revokeObjectURL(url);
 
-    this.state.textContent =
-      "Downloaded";
+    this.state.textContent = "Downloaded";
 
     this.textarea.focus();
   }
@@ -1309,220 +1086,118 @@ class TextEditorMod extends PolyMod {
       "top-left",
       "top-right",
       "bottom-left",
-      "bottom-right"
+      "bottom-right",
     ];
 
-    directions.forEach(
-      (direction) => {
-        const handle =
-          document.createElement("div");
+    directions.forEach((direction) => {
+      const handle = document.createElement("div");
 
-        handle.className =
-          `mod-editor-resize mod-editor-resize-${direction}`;
+      handle.className = `mod-editor-resize mod-editor-resize-${direction}`;
 
-        element.appendChild(handle);
+      element.appendChild(handle);
 
-        handle.addEventListener(
-          "mousedown",
-          (e) => {
-            e.preventDefault();
-            e.stopPropagation();
+      handle.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
 
-            const rect =
-              element.getBoundingClientRect();
+        const rect = element.getBoundingClientRect();
 
-            const startX =
-              e.clientX;
+        const startX = e.clientX;
 
-            const startY =
-              e.clientY;
+        const startY = e.clientY;
 
-            const startLeft =
-              rect.left;
+        const startLeft = rect.left;
 
-            const startTop =
-              rect.top;
+        const startTop = rect.top;
 
-            const startWidth =
-              rect.width;
+        const startWidth = rect.width;
 
-            const startHeight =
-              rect.height;
+        const startHeight = rect.height;
 
-            const minWidth =
-              520;
+        const minWidth = 520;
 
-            const minHeight =
-              320;
+        const minHeight = 320;
 
-            const move =
-              (ev) => {
-                const dx =
-                  ev.clientX -
-                  startX;
+        const move = (ev) => {
+          const dx = ev.clientX - startX;
 
-                const dy =
-                  ev.clientY -
-                  startY;
+          const dy = ev.clientY - startY;
 
-                let left =
-                  startLeft;
+          let left = startLeft;
 
-                let top =
-                  startTop;
+          let top = startTop;
 
-                let width =
-                  startWidth;
+          let width = startWidth;
 
-                let height =
-                  startHeight;
+          let height = startHeight;
 
-                if (
-                  direction.includes(
-                    "right"
-                  )
-                ) {
-                  width =
-                    Math.max(
-                      minWidth,
-                      startWidth + dx
-                    );
-                }
-
-                if (
-                  direction.includes(
-                    "left"
-                  )
-                ) {
-                  width =
-                    Math.max(
-                      minWidth,
-                      startWidth - dx
-                    );
-
-                  if (
-                    width === minWidth
-                  ) {
-                    left =
-                      startLeft +
-                      startWidth -
-                      minWidth;
-                  } else {
-                    left =
-                      startLeft + dx;
-                  }
-                }
-
-                if (
-                  direction.includes(
-                    "bottom"
-                  )
-                ) {
-                  height =
-                    Math.max(
-                      minHeight,
-                      startHeight + dy
-                    );
-                }
-
-                if (
-                  direction.includes(
-                    "top"
-                  )
-                ) {
-                  height =
-                    Math.max(
-                      minHeight,
-                      startHeight - dy
-                    );
-
-                  if (
-                    height === minHeight
-                  ) {
-                    top =
-                      startTop +
-                      startHeight -
-                      minHeight;
-                  } else {
-                    top =
-                      startTop + dy;
-                  }
-                }
-
-                if (left < 0) {
-                  width += left;
-                  left = 0;
-                }
-
-                if (top < 0) {
-                  height += top;
-                  top = 0;
-                }
-
-                width =
-                  Math.min(
-                    width,
-                    window.innerWidth - left
-                  );
-
-                height =
-                  Math.min(
-                    height,
-                    window.innerHeight - top
-                  );
-
-                width =
-                  Math.max(
-                    minWidth,
-                    width
-                  );
-
-                height =
-                  Math.max(
-                    minHeight,
-                    height
-                  );
-
-                element.style.left =
-                  `${left}px`;
-
-                element.style.top =
-                  `${top}px`;
-
-                element.style.width =
-                  `${width}px`;
-
-                element.style.height =
-                  `${height}px`;
-              };
-
-            const up =
-              () => {
-                document.removeEventListener(
-                  "mousemove",
-                  move
-                );
-
-                document.removeEventListener(
-                  "mouseup",
-                  up
-                );
-                this.saveWindowState(element);
-              };
-
-            document.addEventListener(
-              "mousemove",
-              move
-            );
-
-            document.addEventListener(
-              "mouseup",
-              up
-            );
+          if (direction.includes("right")) {
+            width = Math.max(minWidth, startWidth + dx);
           }
-        );
-      }
-    );
+
+          if (direction.includes("left")) {
+            width = Math.max(minWidth, startWidth - dx);
+
+            if (width === minWidth) {
+              left = startLeft + startWidth - minWidth;
+            } else {
+              left = startLeft + dx;
+            }
+          }
+
+          if (direction.includes("bottom")) {
+            height = Math.max(minHeight, startHeight + dy);
+          }
+
+          if (direction.includes("top")) {
+            height = Math.max(minHeight, startHeight - dy);
+
+            if (height === minHeight) {
+              top = startTop + startHeight - minHeight;
+            } else {
+              top = startTop + dy;
+            }
+          }
+
+          if (left < 0) {
+            width += left;
+            left = 0;
+          }
+
+          if (top < 0) {
+            height += top;
+            top = 0;
+          }
+
+          width = Math.min(width, window.innerWidth - left);
+
+          height = Math.min(height, window.innerHeight - top);
+
+          width = Math.max(minWidth, width);
+
+          height = Math.max(minHeight, height);
+
+          element.style.left = `${left}px`;
+
+          element.style.top = `${top}px`;
+
+          element.style.width = `${width}px`;
+
+          element.style.height = `${height}px`;
+        };
+
+        const up = () => {
+          document.removeEventListener("mousemove", move);
+
+          document.removeEventListener("mouseup", up);
+          this.saveWindowState(element);
+        };
+
+        document.addEventListener("mousemove", move);
+
+        document.addEventListener("mouseup", up);
+      });
+    });
   }
 
   saveWindowState(element) {
@@ -1538,16 +1213,14 @@ class TextEditorMod extends PolyMod {
         left: rect.left,
         top: rect.top,
         width: rect.width,
-        height: rect.height
-      })
+        height: rect.height,
+      }),
     );
   }
 
   restoreWindowState(element) {
     try {
-      const saved = JSON.parse(
-        localStorage.getItem("polyCssEditorWindow")
-      );
+      const saved = JSON.parse(localStorage.getItem("polyCssEditorWindow"));
 
       if (!saved) {
         return;
@@ -1571,99 +1244,64 @@ class TextEditorMod extends PolyMod {
     } catch {}
   }
 
-  makeDraggable(
-    handle,
-    element
-  ) {
-    handle.addEventListener(
-      "mousedown",
-      (e) => {
-        if (
-          e.target.closest("button")
-        ) {
-          return;
-        }
-
-        if (
-          e.target.closest(
-            ".mod-editor-resize"
-          )
-        ) {
-          return;
-        }
-
-        const rect =
-          element.getBoundingClientRect();
-
-        this.drag = {
-          x: e.clientX,
-          y: e.clientY,
-          left: rect.left,
-          top: rect.top
-        };
-
-        const move = (ev) => {
-          if (!this.drag) {
-            return;
-          }
-
-          const left =
-            Math.max(
-              0,
-              Math.min(
-                this.drag.left +
-                ev.clientX -
-                this.drag.x,
-                window.innerWidth -
-                element.offsetWidth
-              )
-            );
-
-          const top =
-            Math.max(
-              0,
-              Math.min(
-                this.drag.top +
-                ev.clientY -
-                this.drag.y,
-                window.innerHeight -
-                element.offsetHeight
-              )
-            );
-
-          element.style.left =
-            `${left}px`;
-
-          element.style.top =
-            `${top}px`;
-        };
-
-        const up = () => {
-          this.drag = null;
-
-          document.removeEventListener(
-            "mousemove",
-            move
-          );
-
-          document.removeEventListener(
-            "mouseup",
-            up
-          );
-          this.saveWindowState(element);
-        };
-
-        document.addEventListener(
-          "mousemove",
-          move
-        );
-
-        document.addEventListener(
-          "mouseup",
-          up
-        );
+  makeDraggable(handle, element) {
+    handle.addEventListener("mousedown", (e) => {
+      if (e.target.closest("button")) {
+        return;
       }
-    );
+
+      if (e.target.closest(".mod-editor-resize")) {
+        return;
+      }
+
+      const rect = element.getBoundingClientRect();
+
+      this.drag = {
+        x: e.clientX,
+        y: e.clientY,
+        left: rect.left,
+        top: rect.top,
+      };
+
+      const move = (ev) => {
+        if (!this.drag) {
+          return;
+        }
+
+        const left = Math.max(
+          0,
+          Math.min(
+            this.drag.left + ev.clientX - this.drag.x,
+            window.innerWidth - element.offsetWidth,
+          ),
+        );
+
+        const top = Math.max(
+          0,
+          Math.min(
+            this.drag.top + ev.clientY - this.drag.y,
+            window.innerHeight - element.offsetHeight,
+          ),
+        );
+
+        element.style.left = `${left}px`;
+
+        element.style.top = `${top}px`;
+      };
+
+      const up = () => {
+        this.drag = null;
+
+        document.removeEventListener("mousemove", move);
+
+        document.removeEventListener("mouseup", up);
+        this.saveWindowState(element);
+      };
+
+      document.addEventListener("mousemove", move);
+
+      document.addEventListener("mouseup", up);
+    });
   }
 
   updateGutter() {
@@ -1671,21 +1309,16 @@ class TextEditorMod extends PolyMod {
       return;
     }
 
-    const lines =
-      this.textarea.value
-        .split("\n")
-        .length;
+    const lines = this.textarea.value.split("\n").length;
 
-    this.gutter.textContent =
-      Array.from(
-        {
-          length: lines
-        },
-        (_, i) => i + 1
-      ).join("\n");
+    this.gutter.textContent = Array.from(
+      {
+        length: lines,
+      },
+      (_, i) => i + 1,
+    ).join("\n");
 
-    this.gutter.scrollTop =
-      this.textarea.scrollTop;
+    this.gutter.scrollTop = this.textarea.scrollTop;
   }
 
   updateStatus() {
@@ -1693,24 +1326,15 @@ class TextEditorMod extends PolyMod {
       return;
     }
 
-    const before =
-      this.textarea.value.slice(
-        0,
-        this.textarea.selectionStart
-      );
+    const before = this.textarea.value.slice(0, this.textarea.selectionStart);
 
-    const line =
-      before.split("\n").length;
+    const line = before.split("\n").length;
 
-    const column =
-      before.length -
-      before.lastIndexOf("\n");
+    const column = before.length - before.lastIndexOf("\n");
 
-    this.pos.textContent =
-      `Ln ${line}, Col ${column}`;
+    this.pos.textContent = `Ln ${line}, Col ${column}`;
 
-    this.chars.textContent =
-      `${this.textarea.value.length} characters`;
+    this.chars.textContent = `${this.textarea.value.length} characters`;
   }
 
   save() {
@@ -1721,18 +1345,13 @@ class TextEditorMod extends PolyMod {
     this.textarea.readOnly = false;
     this.textarea.disabled = false;
 
-    const css =
-      this.textarea.value;
+    const css = this.textarea.value;
 
-    localStorage.setItem(
-      "cssTheme",
-      css
-    );
+    localStorage.setItem("cssTheme", css);
 
     this.applyTheme();
 
-    this.state.textContent =
-      "Saved & Applied";
+    this.state.textContent = "Saved & Applied";
 
     this.textarea.focus();
   }
@@ -1772,10 +1391,6 @@ class TextEditorMod extends PolyMod {
   }
 }
 
-const polyMod =
-  new TextEditorMod();
+const polyMod = new TextEditorMod();
 
-export {
-  polyMod
-};
-
+export { polyMod };

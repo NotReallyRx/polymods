@@ -499,7 +499,9 @@ class TextNotesEditorMod extends PolyMod {
 
     title.textContent = "Game Notes";
 
-    const closeBtn = document.createElement("button"); closeBtn.className = "poly-text-editor-button"; closeBtn.textContent = "×";
+    const closeBtn = document.createElement("button");
+    closeBtn.className = "poly-text-editor-button";
+    closeBtn.textContent = "×";
 
     closeBtn.className += " poly-text-editor-close";
 
@@ -605,7 +607,6 @@ class TextNotesEditorMod extends PolyMod {
 
     document.body.appendChild(win);
     this.restoreWindowState(win);
-
 
     this.editor = win;
 
@@ -774,7 +775,10 @@ class TextNotesEditorMod extends PolyMod {
     });
 
     const blockGameKeys = (e) => {
-      if (document.activeElement === textarea || document.activeElement === nameInput) {
+      if (
+        document.activeElement === textarea ||
+        document.activeElement === nameInput
+      ) {
         e.stopPropagation();
       }
     };
@@ -1327,7 +1331,6 @@ class TextNotesEditorMod extends PolyMod {
 
           this.saveWindowState(element);
 
-
           document.removeEventListener("mouseup", up);
         };
 
@@ -1336,6 +1339,8 @@ class TextNotesEditorMod extends PolyMod {
         document.addEventListener("mouseup", up);
       });
     });
+  }
+
   saveWindowState(element) {
     if (element.hidden) {
       return;
@@ -1349,16 +1354,14 @@ class TextNotesEditorMod extends PolyMod {
         left: rect.left,
         top: rect.top,
         width: rect.width,
-        height: rect.height
-      })
+        height: rect.height,
+      }),
     );
   }
 
   restoreWindowState(element) {
     try {
-      const saved = JSON.parse(
-        localStorage.getItem("polyTextEditorWindow")
-      );
+      const saved = JSON.parse(localStorage.getItem("polyTextEditorWindow"));
 
       if (!saved) {
         return;
@@ -1380,8 +1383,6 @@ class TextNotesEditorMod extends PolyMod {
         element.style.height = `${saved.height}px`;
       }
     } catch {}
-  }
-
   }
 
   makeDraggable(handle, element) {
@@ -1438,8 +1439,7 @@ class TextNotesEditorMod extends PolyMod {
 
         document.removeEventListener("mousemove", move);
 
-          this.saveWindowState(element);
-
+        this.saveWindowState(element);
 
         document.removeEventListener("mouseup", up);
       };
