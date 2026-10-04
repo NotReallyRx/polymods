@@ -1525,6 +1525,52 @@ class TextEditorMod extends PolyMod {
     );
   }
 
+  saveWindowState(element) {
+    if (element.hidden) {
+      return;
+    }
+
+    const rect = element.getBoundingClientRect();
+
+    localStorage.setItem(
+      "polyCssEditorWindow",
+      JSON.stringify({
+        left: rect.left,
+        top: rect.top,
+        width: rect.width,
+        height: rect.height
+      })
+    );
+  }
+
+  restoreWindowState(element) {
+    try {
+      const saved = JSON.parse(
+        localStorage.getItem("polyCssEditorWindow")
+      );
+
+      if (!saved) {
+        return;
+      }
+
+      if (Number.isFinite(saved.left)) {
+        element.style.left = `${saved.left}px`;
+      }
+
+      if (Number.isFinite(saved.top)) {
+        element.style.top = `${saved.top}px`;
+      }
+
+      if (Number.isFinite(saved.width)) {
+        element.style.width = `${saved.width}px`;
+      }
+
+      if (Number.isFinite(saved.height)) {
+        element.style.height = `${saved.height}px`;
+      }
+    } catch {}
+  }
+
   makeDraggable(
     handle,
     element
