@@ -604,6 +604,8 @@ class TextNotesEditorMod extends PolyMod {
     win.append(titlebar, tabs, namebar, main, status);
 
     document.body.appendChild(win);
+    this.restoreWindowState(win);
+
 
     this.editor = win;
 
@@ -1323,6 +1325,9 @@ class TextNotesEditorMod extends PolyMod {
         const up = () => {
           document.removeEventListener("mousemove", move);
 
+          this.saveWindowState(element);
+
+
           document.removeEventListener("mouseup", up);
         };
 
@@ -1331,6 +1336,52 @@ class TextNotesEditorMod extends PolyMod {
         document.addEventListener("mouseup", up);
       });
     });
+  saveWindowState(element) {
+    if (element.hidden) {
+      return;
+    }
+
+    const rect = element.getBoundingClientRect();
+
+    localStorage.setItem(
+      "polyTextEditorWindow",
+      JSON.stringify({
+        left: rect.left,
+        top: rect.top,
+        width: rect.width,
+        height: rect.height
+      })
+    );
+  }
+
+  restoreWindowState(element) {
+    try {
+      const saved = JSON.parse(
+        localStorage.getItem("polyTextEditorWindow")
+      );
+
+      if (!saved) {
+        return;
+      }
+
+      if (Number.isFinite(saved.left)) {
+        element.style.left = `${saved.left}px`;
+      }
+
+      if (Number.isFinite(saved.top)) {
+        element.style.top = `${saved.top}px`;
+      }
+
+      if (Number.isFinite(saved.width)) {
+        element.style.width = `${saved.width}px`;
+      }
+
+      if (Number.isFinite(saved.height)) {
+        element.style.height = `${saved.height}px`;
+      }
+    } catch {}
+  }
+
   }
 
   makeDraggable(handle, element) {
@@ -1386,6 +1437,9 @@ class TextNotesEditorMod extends PolyMod {
         this.drag = null;
 
         document.removeEventListener("mousemove", move);
+
+          this.saveWindowState(element);
+
 
         document.removeEventListener("mouseup", up);
       };

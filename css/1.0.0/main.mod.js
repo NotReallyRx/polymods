@@ -1006,6 +1006,8 @@ class TextEditorMod extends PolyMod {
     );
 
     document.body.appendChild(win);
+    this.restoreWindowState(win);
+
 
     this.editor = win;
     this.textarea = textarea;
@@ -1505,6 +1507,7 @@ class TextEditorMod extends PolyMod {
                   "mouseup",
                   up
                 );
+                this.saveWindowState(element);
               };
 
             document.addEventListener(
@@ -1601,6 +1604,7 @@ class TextEditorMod extends PolyMod {
             "mouseup",
             up
           );
+          this.saveWindowState(element);
         };
 
         document.addEventListener(
