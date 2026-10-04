@@ -1025,6 +1025,15 @@ class TextEditorMod extends PolyMod {
         "Modified";
     };
 
+    const blockGameKeys = (e) => {
+      if (document.activeElement === textarea) {
+        e.stopPropagation();
+      }
+    };
+
+    document.addEventListener("keydown", blockGameKeys, true);
+    document.addEventListener("keyup", blockGameKeys, true);
+
     textarea.addEventListener(
       "input",
       update
