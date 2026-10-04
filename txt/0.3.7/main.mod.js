@@ -771,6 +771,15 @@ class TextNotesEditorMod extends PolyMod {
       this.updateStatus();
     });
 
+    const blockGameKeys = (e) => {
+      if (document.activeElement === textarea) {
+        e.stopPropagation();
+      }
+    };
+
+    document.addEventListener("keydown", blockGameKeys, true);
+    document.addEventListener("keyup", blockGameKeys, true);
+
     textarea.addEventListener("keydown", (e) => {
       if (e.key === "Tab") {
         e.preventDefault();
