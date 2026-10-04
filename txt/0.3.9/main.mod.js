@@ -772,7 +772,7 @@ class TextNotesEditorMod extends PolyMod {
     });
 
     const blockGameKeys = (e) => {
-      if (document.activeElement === textarea) {
+      if (document.activeElement === textarea || document.activeElement === nameInput) {
         e.stopPropagation();
       }
     };
