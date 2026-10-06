@@ -775,6 +775,9 @@ class TextNotesEditorMod extends PolyMod {
     });
 
     const blockGameKeys = (e) => {
+      if (e.key === "F8" || e.key === "F9") {
+        return;
+      }
       if (
         document.activeElement === textarea ||
         document.activeElement === nameInput

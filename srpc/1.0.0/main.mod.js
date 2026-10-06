@@ -82,6 +82,9 @@ export class SpotifyRPCPopup {
     this.pinned = false;
     this.trackData = null;
     this.stickToCorner = false;
+    this.baseOpacity = 1;
+    this.isHoveringPopup = false;
+    this.onMouseMove = null;
   }
 
   createPopup() {
@@ -140,9 +143,16 @@ export class SpotifyRPCPopup {
                 z-index: 99999;
                 background: var(--sr-border);
                 opacity: var(--sr-opacity, 1);
+                pointer-events: none;
+                transition: opacity 0.15s ease;
                 transform: skewX(-8deg);
                 transform-origin: top right;
                 isolation: isolate;
+            }
+
+            #${this.popupId}:hover,
+            #${this.popupId}:focus-within {
+                opacity: 0.5;
             }
 
             #${this.popupId}.sr-stick-corner {
@@ -315,6 +325,37 @@ export class SpotifyRPCPopup {
     this.progressFillElement = popup.querySelector(".sr-progress-fill");
     this.currentTimeElement = popup.querySelector(".sr-current-time");
     this.durationElement = popup.querySelector(".sr-duration");
+
+    this.onMouseMove = (event) => {
+      if (!this.popupElement || this.popupElement.style.display === "none") {
+        if (this.isHoveringPopup) {
+          this.isHoveringPopup = false;
+          this.popupElement && this.updatePopupOpacity();
+        }
+        return;
+      }
+
+      const rect = this.popupElement.getBoundingClientRect();
+      const inside =
+        event.clientX >= rect.left &&
+        event.clientX <= rect.right &&
+        event.clientY >= rect.top &&
+        event.clientY <= rect.bottom;
+
+      if (inside !== this.isHoveringPopup) {
+        this.isHoveringPopup = inside;
+        this.updatePopupOpacity();
+      }
+    };
+
+    document.addEventListener("mousemove", this.onMouseMove);
+  }
+
+  updatePopupOpacity() {
+    if (!this.popupElement) return;
+
+    const targetOpacity = this.isHoveringPopup ? 0.5 : this.baseOpacity;
+    this.popupElement.style.opacity = String(targetOpacity);
   }
 
   showPopup(data, options = {}) {
@@ -367,10 +408,12 @@ export class SpotifyRPCPopup {
       this.artElement.classList.toggle("sr-hidden", !showCover);
     }
 
+    this.baseOpacity = validOpacity;
     this.popupElement.style.setProperty(
       "--sr-opacity",
       validOpacity.toString(),
     );
+    this.updatePopupOpacity();
 
     this.stickToCorner = Boolean(stickToCorner);
     this.popupElement.classList.toggle("sr-stick-corner", this.stickToCorner);
@@ -532,6 +575,11 @@ export class SpotifyRPCPopup {
     if (this.progressInterval) {
       clearInterval(this.progressInterval);
       this.progressInterval = null;
+    }
+
+    if (this.onMouseMove) {
+      document.removeEventListener("mousemove", this.onMouseMove);
+      this.onMouseMove = null;
     }
 
     this.popupElement?.remove();
