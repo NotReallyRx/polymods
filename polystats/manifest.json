@@ -1,0 +1,9 @@
+{
+    "name": "Polystatistics",
+    "author": "Dorachad (ported to PML)",
+    "id": "polystatistics",
+    "latest": {
+        "0.6.0": "1.0.0",
+        "0.6.0-beta1": "1.0.0"
+    }
+}
